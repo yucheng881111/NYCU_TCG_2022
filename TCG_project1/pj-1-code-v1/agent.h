@@ -170,6 +170,7 @@ public:
 		int best_op = -1;
 		
 		for (int op : opcode) {
+			/* max reward strategy */
 			/*
 			board::reward reward = board(before).slide(op);
 			//if (reward != -1) return action::slide(op);
@@ -178,6 +179,8 @@ public:
 				best_op = op;
 			}
 			*/
+
+			/* max empty space strategy */
 			board tmp = board(before);
 			board::reward reward = action::slide(op).apply(tmp);
 			int cnt = 0;
@@ -186,6 +189,22 @@ public:
 					cnt++;
 				}
 			}
+
+			/* max empty space strategy with layer 2 */
+			board tmp2 = board(tmp);
+			int max_empty_space2 = -1;
+			for (int op2 : opcode) {
+				board tmp3 = board(tmp2);
+				board::reward reward2 = action::slide(op2).apply(tmp3);
+				int cnt2 = 0;
+				for (int pos : space) {
+					if (tmp3(pos) == 0) {
+						cnt2++;
+					}
+				}
+				max_empty_space2 = std::max(max_empty_space2, cnt2);
+			}
+			cnt += max_empty_space2;
 			
 			if (cnt > max_empty_space) {
 				max_empty_space = cnt;
