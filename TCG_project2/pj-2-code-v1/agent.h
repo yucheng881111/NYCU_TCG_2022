@@ -44,7 +44,7 @@ public:
 	virtual ~agent() {}
 	virtual void open_episode(const std::string& flag = "") {}
 	virtual void close_episode(const std::string& flag = "") {}
-	virtual action take_action(const board& b) { return action(); }
+	virtual action take_action(const board& b, float& state_value, int& r) { return action(); }
 	virtual bool check_for_win(const board& b) { return false; }
 
 public:
@@ -99,11 +99,18 @@ public:
 
 protected:
 	virtual void init_weights(const std::string& info) {
+		/*
 		std::string res = info; // comma-separated sizes, e.g., "65536,65536"
 		for (char& ch : res)
 			if (!std::isdigit(ch)) ch = ' ';
 		std::stringstream in(res);
 		for (size_t size; in >> size; net.emplace_back(size));
+		*/
+		net.emplace_back(16 * 16 * 16 * 16);
+		net.emplace_back(16 * 16 * 16 * 16);
+		net.emplace_back(16 * 16 * 16 * 16);
+		net.emplace_back(16 * 16 * 16 * 16);
+
 	}
 	virtual void load_weights(const std::string& path) {
 		std::ifstream in(path, std::ios::in | std::ios::binary);
@@ -142,7 +149,7 @@ public:
 		spaces[4] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 	}
 
-	virtual action take_action(const board& after) {
+	virtual action take_action(const board& after, float& state_value, int& r) {
 		std::vector<int> space = spaces[after.last()];
 		std::shuffle(space.begin(), space.end(), engine);
 		for (int pos : space) {
@@ -175,8 +182,10 @@ public:
 	my_slider(const std::string& args = "") : weight_agent("name=slide role=slider " + args),
 		opcode({ 0, 1, 2, 3 }), space({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }) {}
 
-	virtual action take_action(const board& before) {
+	virtual action take_action(const board& before, float& state_value, int& r) {
 		float best_v = -std::numeric_limits<float>::max();
+		int best_reward = -std::numeric_limits<float>::max();
+		int best_state_value = -std::numeric_limits<float>::max();
 		int best_op = -1;
 		for (int op : opcode) {
 			board tmp = board(before);
@@ -184,17 +193,23 @@ public:
 			if (reward == -1) {
 				continue;
 			}
-			float v = reward + estimate_value(tmp);
+
+			float vs = estimate_value(tmp);
+			float v = reward + vs;
 			if (v > best_v) {
 				best_v = v;
 				best_op = op;
+				best_reward = reward;
+				best_state_value = vs;
 			}
 
-		}	
+		}
 		
 		if (best_op == -1) {
 			return action();
 		} else {
+			state_value = best_state_value;
+			r = best_reward;
 			return action::slide(best_op);
 		}
 		
@@ -204,17 +219,32 @@ public:
 		float sum = 0.0;
 		board tmp = board(b);
 		
-		int idx0 = extract_feature(tmp, 0, 1, 2, 3);
-		int idx1 = extract_feature(tmp, 4, 5, 6, 7);
-		int idx2 = extract_feature(tmp, 8, 9, 10, 11);
-		int idx3 = extract_feature(tmp, 12, 13, 14, 15);
-
-		
-		sum += (net[0][idx0] + net[1][idx1] + net[2][idx2] + net[3][idx3]);
-		sum += (net[0][idx4] + net[1][idx5] + net[2][idx6] + net[3][idx7]);
+		for (int i = 0; i < 4; ++i) {
+			int idx0 = extract_feature(tmp, 0, 1, 2, 3);
+			int idx1 = extract_feature(tmp, 4, 5, 6, 7);
+			int idx2 = extract_feature(tmp, 8, 9, 10, 11);
+			int idx3 = extract_feature(tmp, 12, 13, 14, 15);
+			sum += (net[0][idx0] + net[1][idx1] + net[2][idx2] + net[3][idx3]);
+		}
 		
 		return sum;
 
+	}
+
+	float adjust_value(const board& b, float target) {
+		return 0;
+	}
+
+	int extract_feature(const board& after, int a, int b, int c, int d) const {
+		return after(a) * 16 * 16 * 16 + after(b) * 16 * 16 + after(c) * 16 + after(d);
+	}
+
+	void update(std::vector<state>& path) {
+		float tmp = 0;
+		for (int i = path.size() - 1; i >= 0; i--) {
+			float td_error = tmp - path[i].value;
+			tmp = path[i].reward + adjust_value(path[i].board_after, alpha * td_error);
+		}
 	}
 
 private:
