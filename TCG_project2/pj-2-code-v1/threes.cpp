@@ -63,7 +63,7 @@ int main(int argc, const char* argv[]) {
 
 	my_slider slide(slide_args);
 	random_placer place(place_args);
-	std:vector<state> path;
+	std::vector<state> path;
 
 	while (!stats.is_finished()) {
 //		std::cerr << "======== Game " << stats.step() << " ========" << std::endl;

@@ -184,8 +184,8 @@ public:
 
 	virtual action take_action(const board& before, float& state_value, int& r) {
 		float best_v = -std::numeric_limits<float>::max();
-		int best_reward = -std::numeric_limits<float>::max();
-		int best_state_value = -std::numeric_limits<float>::max();
+		int best_reward = -std::numeric_limits<int>::max();
+		float best_state_value = -std::numeric_limits<float>::max();
 		int best_op = -1;
 		for (int op : opcode) {
 			board tmp = board(before);
