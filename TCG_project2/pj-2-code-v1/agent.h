@@ -18,6 +18,18 @@
 #include "board.h"
 #include "action.h"
 #include "weight.h"
+#include <unistd.h>
+
+struct state {
+	board board_before;
+	board board_after;
+	int reward;
+	float value;
+	state(){
+		reward = 0;
+		value = 0;
+	}
+};
 
 class agent {
 public:
@@ -158,89 +170,51 @@ private:
  * random player, i.e., slider
  * select a legal action randomly
  */
-class random_slider : public random_agent {
+class my_slider : public weight_agent {
 public:
-	random_slider(const std::string& args = "") : random_agent("name=slide role=slider " + args),
+	my_slider(const std::string& args = "") : weight_agent("name=slide role=slider " + args),
 		opcode({ 0, 1, 2, 3 }), space({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }) {}
 
 	virtual action take_action(const board& before) {
-		//std::shuffle(opcode.begin(), opcode.end(), engine);
-		int max_reward = -1;
-		int max_empty_space = -1;
+		float best_v = -std::numeric_limits<float>::max();
 		int best_op = -1;
-		
 		for (int op : opcode) {
-			/* max reward strategy */
-			/*
-			board::reward reward = board(before).slide(op);
-			//if (reward != -1) return action::slide(op);
-			if (reward > max_reward) {
-				max_reward = reward;
-				best_op = op;
-			}
-			*/
-
-			/* max empty space strategy */
 			board tmp = board(before);
 			board::reward reward = action::slide(op).apply(tmp);
-			int cnt = 0;
-			for (int pos : space) {
-				if (tmp(pos) == 0) {
-					cnt++;
-				}
+			if (reward == -1) {
+				continue;
 			}
-
-			/* layer 2 strategy */
-			board tmp2 = board(tmp);
-			int max_empty_space2 = -1;
-			int max_reward2 = -1;
-			for (int op2 : opcode) {
-				board tmp3 = board(tmp2);
-				board::reward reward2 = action::slide(op2).apply(tmp3);
-				/* layer 2 with max empty space */
-				/*
-				int cnt2 = 0;
-				for (int pos : space) {
-					if (tmp3(pos) == 0) {
-						cnt2++;
-					}
-				}
-				max_empty_space2 = std::max(max_empty_space2, cnt2);
-				*/
-
-				/* layer 2 with max reward */
-				max_reward2 = std::max(max_reward2, reward2);
-			}
-
-			/* max empty space */
-			/*
-			cnt += max_empty_space2;
-			if (cnt > max_empty_space) {
-				max_empty_space = cnt;
-				max_reward = reward;
-				best_op = op;
-			} else if (cnt == max_empty_space) {
-				if (reward > max_reward) {
-					max_reward = reward;
-					best_op = op;
-				}
-			}
-			*/
-
-			/* max reward */
-			reward += max_reward2;
-			if (reward > max_reward) {
-				max_reward = reward;
+			float v = reward + estimate_value(tmp);
+			if (v > best_v) {
+				best_v = v;
 				best_op = op;
 			}
 
-		}
-
+		}	
+		
 		if (best_op == -1) {
 			return action();
 		} else {
 			return action::slide(best_op);
 		}
+		
+	}
+
+	float estimate_value(const board& b) {
+		float sum = 0.0;
+		board tmp = board(b);
+		
+		int idx0 = extract_feature(tmp, 0, 1, 2, 3);
+		int idx1 = extract_feature(tmp, 4, 5, 6, 7);
+		int idx2 = extract_feature(tmp, 8, 9, 10, 11);
+		int idx3 = extract_feature(tmp, 12, 13, 14, 15);
+
+		
+		sum += (net[0][idx0] + net[1][idx1] + net[2][idx2] + net[3][idx3]);
+		sum += (net[0][idx4] + net[1][idx5] + net[2][idx6] + net[3][idx7]);
+		
+		return sum;
+
 	}
 
 private:
