@@ -189,7 +189,7 @@ public:
 		int best_op = -1;
 		for (int op : opcode) {
 			board tmp = board(before);
-			board::reward reward = action::slide(op).apply(tmp);
+			board::reward reward = tmp.slide(op);
 			if (reward == -1) {
 				continue;
 			}
@@ -225,14 +225,53 @@ public:
 			int idx2 = extract_feature(tmp, 8, 9, 10, 11);
 			int idx3 = extract_feature(tmp, 12, 13, 14, 15);
 			sum += (net[0][idx0] + net[1][idx1] + net[2][idx2] + net[3][idx3]);
+			tmp.rotate_clockwise();
+		}
+
+		tmp.reflect_horizontal();
+
+		for (int i = 0; i < 4; ++i) {
+			int idx0 = extract_feature(tmp, 0, 1, 2, 3);
+			int idx1 = extract_feature(tmp, 4, 5, 6, 7);
+			int idx2 = extract_feature(tmp, 8, 9, 10, 11);
+			int idx3 = extract_feature(tmp, 12, 13, 14, 15);
+			sum += (net[0][idx0] + net[1][idx1] + net[2][idx2] + net[3][idx3]);
+			tmp.rotate_clockwise();
 		}
 		
 		return sum;
 
 	}
 
-	float adjust_value(const board& b, float target) {
-		return 0;
+	void adjust_value(const board& b, float target) {
+		board tmp = board(b);
+		float t_split = target / 32;
+
+		for (int i = 0; i < 4; ++i) {
+			int idx0 = extract_feature(tmp, 0, 1, 2, 3);
+			int idx1 = extract_feature(tmp, 4, 5, 6, 7);
+			int idx2 = extract_feature(tmp, 8, 9, 10, 11);
+			int idx3 = extract_feature(tmp, 12, 13, 14, 15);
+			net[0][idx0] += t_split;
+			net[1][idx1] += t_split;
+			net[2][idx2] += t_split;
+			net[3][idx3] += t_split;
+			tmp.rotate_clockwise();
+		}
+
+		tmp.reflect_horizontal();
+		
+		for (int i = 0; i < 4; ++i) {
+			int idx0 = extract_feature(tmp, 0, 1, 2, 3);
+			int idx1 = extract_feature(tmp, 4, 5, 6, 7);
+			int idx2 = extract_feature(tmp, 8, 9, 10, 11);
+			int idx3 = extract_feature(tmp, 12, 13, 14, 15);
+			net[0][idx0] += t_split;
+			net[1][idx1] += t_split;
+			net[2][idx2] += t_split;
+			net[3][idx3] += t_split;
+			tmp.rotate_clockwise();
+		}
 	}
 
 	int extract_feature(const board& after, int a, int b, int c, int d) const {
@@ -243,7 +282,8 @@ public:
 		float tmp = 0;
 		for (int i = path.size() - 1; i >= 0; i--) {
 			float td_error = tmp - path[i].value;
-			tmp = path[i].reward + adjust_value(path[i].board_after, alpha * td_error);
+			adjust_value(path[i].board_after, alpha * td_error);
+			tmp = path[i].reward + estimate_value(path[i].board_after);
 		}
 	}
 

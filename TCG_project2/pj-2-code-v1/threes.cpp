@@ -96,6 +96,7 @@ int main(int argc, const char* argv[]) {
 		stats.close_episode(win.name());
 
 		slide.update(path);
+    path.clear();
 		slide.close_episode(win.name());
 		place.close_episode(win.name());
 	}
