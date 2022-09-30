@@ -106,11 +106,16 @@ protected:
 		std::stringstream in(res);
 		for (size_t size; in >> size; net.emplace_back(size));
 		*/
+		/*
 		net.emplace_back(16 * 16 * 16 * 16);
 		net.emplace_back(16 * 16 * 16 * 16);
 		net.emplace_back(16 * 16 * 16 * 16);
 		net.emplace_back(16 * 16 * 16 * 16);
-
+		*/
+		net.emplace_back(16 * 16 * 16 * 16 * 16 * 16);
+		net.emplace_back(16 * 16 * 16 * 16 * 16 * 16);
+		net.emplace_back(16 * 16 * 16 * 16 * 16 * 16);
+		net.emplace_back(16 * 16 * 16 * 16 * 16 * 16);
 	}
 	virtual void load_weights(const std::string& path) {
 		std::ifstream in(path, std::ios::in | std::ios::binary);
@@ -220,10 +225,16 @@ public:
 		board tmp = board(b);
 		
 		for (int i = 0; i < 4; ++i) {
+			/*
 			int idx0 = extract_feature(tmp, 0, 1, 2, 3);
 			int idx1 = extract_feature(tmp, 4, 5, 6, 7);
 			int idx2 = extract_feature(tmp, 8, 9, 10, 11);
 			int idx3 = extract_feature(tmp, 12, 13, 14, 15);
+			*/
+			int idx0 = extract_feature6(tmp, 0, 1, 2, 3, 4, 5);
+			int idx1 = extract_feature6(tmp, 4, 5, 6, 7, 8, 9);
+			int idx2 = extract_feature6(tmp, 5, 6, 7, 9, 10, 11);
+			int idx3 = extract_feature6(tmp, 9, 10, 11, 13, 14, 15);
 			sum += (net[0][idx0] + net[1][idx1] + net[2][idx2] + net[3][idx3]);
 			tmp.rotate_clockwise();
 		}
@@ -231,10 +242,16 @@ public:
 		tmp.reflect_horizontal();
 
 		for (int i = 0; i < 4; ++i) {
+			/*
 			int idx0 = extract_feature(tmp, 0, 1, 2, 3);
 			int idx1 = extract_feature(tmp, 4, 5, 6, 7);
 			int idx2 = extract_feature(tmp, 8, 9, 10, 11);
 			int idx3 = extract_feature(tmp, 12, 13, 14, 15);
+			*/
+			int idx0 = extract_feature6(tmp, 0, 1, 2, 3, 4, 5);
+			int idx1 = extract_feature6(tmp, 4, 5, 6, 7, 8, 9);
+			int idx2 = extract_feature6(tmp, 5, 6, 7, 9, 10, 11);
+			int idx3 = extract_feature6(tmp, 9, 10, 11, 13, 14, 15);
 			sum += (net[0][idx0] + net[1][idx1] + net[2][idx2] + net[3][idx3]);
 			tmp.rotate_clockwise();
 		}
@@ -248,10 +265,16 @@ public:
 		float t_split = target / 32;
 
 		for (int i = 0; i < 4; ++i) {
+			/*
 			int idx0 = extract_feature(tmp, 0, 1, 2, 3);
 			int idx1 = extract_feature(tmp, 4, 5, 6, 7);
 			int idx2 = extract_feature(tmp, 8, 9, 10, 11);
 			int idx3 = extract_feature(tmp, 12, 13, 14, 15);
+			*/
+			int idx0 = extract_feature6(tmp, 0, 1, 2, 3, 4, 5);
+			int idx1 = extract_feature6(tmp, 4, 5, 6, 7, 8, 9);
+			int idx2 = extract_feature6(tmp, 5, 6, 7, 9, 10, 11);
+			int idx3 = extract_feature6(tmp, 9, 10, 11, 13, 14, 15);
 			net[0][idx0] += t_split;
 			net[1][idx1] += t_split;
 			net[2][idx2] += t_split;
@@ -262,10 +285,16 @@ public:
 		tmp.reflect_horizontal();
 		
 		for (int i = 0; i < 4; ++i) {
+			/*
 			int idx0 = extract_feature(tmp, 0, 1, 2, 3);
 			int idx1 = extract_feature(tmp, 4, 5, 6, 7);
 			int idx2 = extract_feature(tmp, 8, 9, 10, 11);
 			int idx3 = extract_feature(tmp, 12, 13, 14, 15);
+			*/
+			int idx0 = extract_feature6(tmp, 0, 1, 2, 3, 4, 5);
+			int idx1 = extract_feature6(tmp, 4, 5, 6, 7, 8, 9);
+			int idx2 = extract_feature6(tmp, 5, 6, 7, 9, 10, 11);
+			int idx3 = extract_feature6(tmp, 9, 10, 11, 13, 14, 15);
 			net[0][idx0] += t_split;
 			net[1][idx1] += t_split;
 			net[2][idx2] += t_split;
@@ -276,6 +305,10 @@ public:
 
 	int extract_feature(const board& after, int a, int b, int c, int d) const {
 		return after(a) * 16 * 16 * 16 + after(b) * 16 * 16 + after(c) * 16 + after(d);
+	}
+
+	int extract_feature6(const board& after, int a, int b, int c, int d, int e, int f) const {
+		return after(a) * 16 * 16 * 16 * 16 * 16 + after(b) * 16 * 16 * 16 * 16 + after(c) * 16 * 16 * 16 + after(d) * 16 * 16 + after(e) * 16 + after(f);
 	}
 
 	void update(std::vector<state>& path) {
