@@ -199,8 +199,20 @@ public:
 				continue;
 			}
 
+			// only for evaluation
+			float best_next_layer = -std::numeric_limits<float>::max();
+			for (int op2 : opcode) {
+				board tmp2 = board(tmp);
+				board::reward reward2 = tmp2.slide(op2);
+				if (reward2 == -1) {
+					continue;
+				}
+				best_next_layer = std::max(best_next_layer, reward2 + estimate_value(tmp2));
+			}
+			
 			float vs = estimate_value(tmp);
-			float v = reward + vs;
+			//float v = reward + vs;
+			float v = reward + vs + 0.3 * best_next_layer;
 			if (v > best_v) {
 				best_v = v;
 				best_op = op;
