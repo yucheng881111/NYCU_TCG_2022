@@ -20,6 +20,8 @@
 #include "weight.h"
 #include <unistd.h>
 
+#define EVAL
+
 struct state {
 	board board_before;
 	board board_after;
@@ -185,13 +187,20 @@ private:
 class my_slider : public weight_agent {
 public:
 	my_slider(const std::string& args = "") : weight_agent("name=slide role=slider " + args),
-		opcode({ 0, 1, 2, 3 }), space({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }) {}
+		opcode({ 0, 1, 2, 3 }) {
+			spaces[0] = { 12, 13, 14, 15 };
+			spaces[1] = { 0, 4, 8, 12 };
+			spaces[2] = { 0, 1, 2, 3};
+			spaces[3] = { 3, 7, 11, 15 };
+			spaces[4] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+		}
 
 	virtual action take_action(const board& before, float& state_value, int& r) {
 		float best_v = -std::numeric_limits<float>::max();
 		int best_reward = -std::numeric_limits<int>::max();
 		float best_state_value = -std::numeric_limits<float>::max();
 		int best_op = -1;
+
 		for (int op : opcode) {
 			board tmp = board(before);
 			board::reward reward = tmp.slide(op);
@@ -199,6 +208,9 @@ public:
 				continue;
 			}
 
+			float vs = estimate_value(tmp);
+
+			/*
 			// only for evaluation
 			float best_next_layer = -std::numeric_limits<float>::max();
 			for (int op2 : opcode) {
@@ -209,10 +221,74 @@ public:
 				}
 				best_next_layer = std::max(best_next_layer, reward2 + estimate_value(tmp2));
 			}
+			*/
 			
-			float vs = estimate_value(tmp);
-			//float v = reward + vs;
-			float v = reward + vs + 0.3 * best_next_layer;
+			#ifdef EVAL
+			int cnt = 0;
+			float expected = 0;
+			for (int pos : spaces[tmp.last()]) {
+				if (tmp(pos) != 0) continue;
+				board tmp2 = board(tmp);
+				//tmp2.place(pos, tmp.hint(), 0);
+				int bag[3], num = 0;
+				for (board::cell t = 1; t <= 3; t++)
+					for (size_t i = 0; i < tmp2.bag(t); i++)
+						bag[num++] = t;
+
+				board::cell tile = tmp2.hint() ?: bag[--num];
+				board::cell hint = bag[--num];
+
+				tmp2.place(pos, tile, hint);
+
+				float expected_1 = -std::numeric_limits<float>::max();
+				for (int op2 : opcode) {
+					board tmp3 = board(tmp2);
+					board::reward r = tmp3.slide(op2);
+					if (r == -1) {
+						continue;
+					}
+
+					float expected2 = 0;
+					int cnt2 = 0;
+					for (int pos : spaces[tmp3.last()]) {
+						if (tmp3(pos) != 0) continue;
+						board tmp4 = board(tmp3);
+						int bag[3], num = 0;
+						for (board::cell t = 1; t <= 3; t++)
+							for (size_t i = 0; i < tmp4.bag(t); i++)
+								bag[num++] = t;
+
+						board::cell tile = tmp4.hint() ?: bag[--num];
+						board::cell hint = bag[--num];
+						tmp4.place(pos, tile, hint);
+						float expected_2 = -std::numeric_limits<float>::max();
+						for (int op3 : opcode) {
+							board tmp5 = board(tmp4);
+							board::reward r = tmp5.slide(op3);
+							if (r == -1) {
+								continue;
+							}
+							expected_2 = std::max(expected_2, r + estimate_value(tmp5));
+						}
+						expected2 += expected_2;
+						cnt2++;
+					}
+					expected2 /= cnt2;
+
+					//expected_1 = std::max(expected_1, r + estimate_value(tmp3));
+					expected_1 = std::max(expected_1, r + expected2);
+				}
+				expected += expected_1;
+				cnt++;
+			}
+
+			vs = expected / cnt;
+
+			#endif
+
+			
+			float v = reward + vs;
+			//float v = reward + vs + 0.3 * best_next_layer;
 			if (v > best_v) {
 				best_v = v;
 				best_op = op;
@@ -220,7 +296,10 @@ public:
 				best_state_value = vs;
 			}
 
+			
+
 		}
+		
 		
 		if (best_op == -1) {
 			return action();
@@ -334,5 +413,5 @@ public:
 
 private:
 	std::array<int, 4> opcode;
-	std::vector<int> space;
+	std::vector<int> spaces[5];
 };
