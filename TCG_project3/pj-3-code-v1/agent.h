@@ -21,8 +21,8 @@
 #include <bits/stdc++.h>
 #include <omp.h>
 
-//#define ParallelAverageSelection
-#define ParallelMajorityVote
+#define ParallelAverageSelection
+//#define ParallelMajorityVote
 //#define Normal
 
 class agent {
@@ -247,17 +247,17 @@ public:
 		}
 
 		int select_action(){
-			// select child node who has the highest win rate (highest Q)
+			// select child node with most visit count
 			if(child.size() == 0){
 				return -1;
 			}
 
-			float max_score = -std::numeric_limits<float>::max();
+			int max_visit = -std::numeric_limits<int>::max();
 			node* c;
 			for(auto &ch : child){
-				float tmp = ch.second->win_rate();
-				if(tmp > max_score){
-					max_score = tmp;
+				int tmp = ch.second->total_cnt;
+				if(tmp > max_visit){
+					max_visit = tmp;
 					c = ch.second;
 				}
 			}
