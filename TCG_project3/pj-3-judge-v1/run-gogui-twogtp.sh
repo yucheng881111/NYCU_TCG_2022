@@ -1,11 +1,11 @@
 #!/bin/bash
 echo "GoGui-TwoGTP Launcher V20221101"
 # commands for player 1
-P1B='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo_total_cnt --shell --name="cnt" --black="mcts N=1000 c=0.5"'
-P1W='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo_total_cnt --shell --name="cnt" --white="mcts N=1000 c=0.5"'
+P1B='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo_majority --shell --name="majority" --black="mcts N=10000 c=0.5"'
+P1W='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo_majority --shell --name="majority" --white="mcts N=10000 c=0.5"'
 # commands for local player 2
-P2B='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo_win_rate --shell --name="win rate" --black="mcts N=1000 c=0.5"'
-P2W='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo_win_rate --shell --name="win rate" --white="mcts N=1000 c=0.5"'
+P2B='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo_avg --shell --name="avg" --black="mcts N=10000 c=0.5"'
+P2W='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo_avg --shell --name="avg" --white="mcts N=10000 c=0.5"'
 
 #P2B='./nogo-judge --shell --name="Judge-Weak-Black" --black="weak"'
 #P2W='./nogo-judge --shell --name="Judge-Weak-White" --white="weak"'

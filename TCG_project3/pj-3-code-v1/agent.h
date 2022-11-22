@@ -21,8 +21,8 @@
 #include <bits/stdc++.h>
 #include <omp.h>
 
-#define ParallelAverageSelection
-//#define ParallelMajorityVote
+//#define ParallelAverageSelection
+#define ParallelMajorityVote
 //#define Normal
 
 class agent {
@@ -112,6 +112,7 @@ public:
 				for (auto &all_child : root->child) {
 					average_selection[id][all_child.first] = (all_child.second)->total_cnt;
 				}
+				delete_tree(root);
 			}
 
 			std::vector<int> result(81, 0);
