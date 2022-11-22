@@ -21,8 +21,9 @@
 #include <bits/stdc++.h>
 #include <omp.h>
 
-//#define ParallelMajorityVote
-#define Normal
+//#define ParallelAverageSelection
+#define ParallelMajorityVote
+//#define Normal
 
 class agent {
 public:
@@ -65,6 +66,8 @@ public:
 	random_agent(const std::string& args = "") : agent(args) {
 		if (meta.find("seed") != meta.end())
 			engine.seed(int(meta["seed"]));
+		else
+			engine.seed((unsigned)time(NULL));
 	}
 	virtual ~random_agent() {}
 
@@ -94,6 +97,40 @@ public:
 		int N = meta["N"];
 		float c = meta["c"];
 		if(N){
+			#ifdef ParallelAverageSelection
+			int thread_num = omp_get_num_procs();
+			omp_set_num_threads(thread_num);
+
+			std::vector<std::vector<int>> average_selection(thread_num, std::vector<int>(81, 0));
+
+			#pragma omp parallel
+			{
+				int id = omp_get_thread_num();
+				node* root = new node(state);
+				root->MCTS(N, engine, c);
+
+				for (auto &all_child : root->child) {
+					average_selection[id][all_child.first] = (all_child.second)->total_cnt;
+				}
+			}
+
+			std::vector<int> result(81, 0);
+			for (int j = 0; j < 81; ++j) {
+				for (int i = 0; i < thread_num; ++i) {
+					result[j] += average_selection[i][j];
+				}
+			}
+
+			auto iter = max_element(result.begin(), result.end());
+			if((*iter) == 0){
+				return action();
+			}
+
+			return action::place(iter - result.begin(), state.info().who_take_turns);
+			
+
+			#endif
+
 			#ifdef ParallelMajorityVote
 			// root parallelizing
 			int thread_num = omp_get_num_procs();
@@ -137,7 +174,7 @@ public:
 			node* root = new node(state);
 			int result = root->MCTS(N, engine, c);
 			return action::place(result, state.info().who_take_turns);
-			
+
 			#endif
 		}
 

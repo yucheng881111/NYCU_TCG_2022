@@ -1,11 +1,14 @@
 #!/bin/bash
 echo "GoGui-TwoGTP Launcher V20221101"
 # commands for player 1
-P1B='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo --shell --name="Hollow-Black" --black="mcts N=1000 c=0.5"'
-P1W='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo --shell --name="Hollow-White" --white="mcts N=1000 c=0.5"'
+P1B='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo_parallel_avg --shell --name="parallel avg" --black="mcts N=1000 c=0.5"'
+P1W='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo_parallel_avg --shell --name="parallel avg" --white="mcts N=1000 c=0.5"'
 # commands for local player 2
-P2B='./nogo-judge --shell --name="Judge-Weak-Black" --black="weak"'
-P2W='./nogo-judge --shell --name="Judge-Weak-White" --white="weak"'
+P2B='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo_parallel --shell --name="parallel" --black="mcts N=1000 c=0.5"'
+P2W='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo_parallel --shell --name="parallel" --white="mcts N=1000 c=0.5"'
+
+#P2B='./nogo-judge --shell --name="Judge-Weak-Black" --black="weak"'
+#P2W='./nogo-judge --shell --name="Judge-Weak-White" --white="weak"'
 # commands for remote player 2
 #P2B="gogui-client tcglinux1 10000"
 #P2W="gogui-client tcglinux1 10000"
