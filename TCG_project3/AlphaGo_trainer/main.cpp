@@ -311,23 +311,33 @@ int main(){
 			auto data = std::get<0>(tp).to(device);
 			auto p_label = std::get<1>(tp).to(device);
 			auto v_label = std::get<2>(tp).to(device);
-
-			//auto [v_out, p_out] = net->forward(data);
+      // policy update
 			auto [v_skip, p_out] = policy_net->forward(data);
-			auto [v_out, p_skip] = value_net->forward(data);
-
-			auto v_loss = torch::mse_loss(v_out.view(-1), v_label);
 			auto p_loss = torch::mean(-torch::sum(p_label * torch::log_softmax(p_out, 1), 1));
-			
-			batch_total_loss_v += v_loss.template item<float>();
 			batch_total_loss_p += p_loss.template item<float>();
-			//auto total_loss = v_loss + p_loss;
-			//total_loss.backward();
-			//optimizer.step();
-			v_loss.backward();
-			optimizer_v.step();
 			p_loss.backward();
 			optimizer_p.step();
+      
+      optimizer_p.zero_grad();
+      optimizer_v.zero_grad();
+
+      // value update
+      auto [v_out, p_skip] = value_net->forward(data);
+      auto v_loss = torch::mse_loss(v_out.view(-1), v_label);
+			v_loss.backward();
+			optimizer_v.step();
+
+      /*
+      // use one module
+      auto [v_out, p_out] = net->forward(data);
+      auto v_loss = torch::mse_loss(v_out.view(-1), v_label);
+      auto p_loss = torch::mean(-torch::sum(p_label * torch::log_softmax(p_out, 1), 1));
+      batch_total_loss_v += v_loss.template item<float>();
+      batch_total_loss_p += p_loss.template item<float>();
+      auto total_loss = v_loss + p_loss;
+      total_loss.backward();
+      optimizer.step();
+      */
 
 			// calculate accuracy
 			for (int j = 0; j < batch_size; ++j) {
@@ -383,9 +393,6 @@ int main(){
 				batch_total_loss_v += v_loss.template item<float>();
 				batch_total_loss_p += p_loss.template item<float>();
 				
-				//std::cout << v_label_eval << std::endl;
-				//std::cout << v_out_eval.view(-1) << std::endl;
-				
 				for (int j = 0; j < batch_size; ++j) {
 					float v_truth = v_label_eval[j].template item<float>();
 					float v_pred = v_out_eval.view(-1)[j].template item<float>();
@@ -413,7 +420,8 @@ int main(){
 			std::cout << "policy loss: " << batch_total_loss_p << "  ";
 			std::cout << "total loss: " << batch_total_loss_v + batch_total_loss_p << std::endl << std::endl;
 
-			torch::save(net, "epoch" + std::to_string(i + 1) + "_weights.pt");
+			torch::save(policy_net, "policy/epoch" + std::to_string(i + 1) + "_weights.pt");
+      torch::save(value_net, "value/epoch" + std::to_string(i + 1) + "_weights.pt");
 		}
 		
 	}
