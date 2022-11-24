@@ -15,7 +15,7 @@ std::vector<int> is_win_eval;
 int seq_len = 3;
 int channel_size = seq_len * 2 + 1;
 int batch_size = 512;
-int num_of_training_data = 13000;
+int num_of_training_data = 9000;
 int num_of_testing_data = 0;
 
 std::pair<int, int> reconstruct(int pos) {
@@ -324,6 +324,7 @@ int main(){
       // value update
       auto [v_out, p_skip] = value_net->forward(data);
       auto v_loss = torch::mse_loss(v_out.view(-1), v_label);
+      batch_total_loss_v += v_loss.template item<float>();
 			v_loss.backward();
 			optimizer_v.step();
 
