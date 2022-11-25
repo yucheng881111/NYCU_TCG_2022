@@ -114,7 +114,7 @@ int main() {
 	*/
   
   int idx = 1;
-  std::cout << "trajectory idx: ";
+  std::cout << "data idx: ";
   std::cin >> idx;
 	int len = replay_buffer[idx].size();
 	std::cout << "data index " << idx << " has size: " << len << std::endl;
@@ -177,7 +177,7 @@ int main() {
 			// planes, height, width, filters, num_res_blocks, policy_size
 			const auto net_op = az::NetworkOptions{channel_size, 9, 9, 128, 2, 81};
 			az::AlphaZeroNetwork net(net_op);
-			torch::load(net, "epoch95_weights.pt");
+			torch::load(net, "value/epoch150_weights.pt");
 			net->to(device);
 			tmp_data = tmp_data.to(device);
 			net->eval();

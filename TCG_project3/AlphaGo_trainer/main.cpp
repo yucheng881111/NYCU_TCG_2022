@@ -302,7 +302,7 @@ int main(){
 		float batch_total_loss_v = 0.0;
 		float batch_total_loss_p = 0.0;
 		int cnt_v = 0, cnt_p = 0;
-		for (int k = 0; k < num_of_training_data/10; ++k) {
+		for (int k = 0; k < num_of_training_data*50/batch_size; ++k) {
 			//optimizer.zero_grad();
 			optimizer_p.zero_grad();
 			optimizer_v.zero_grad();
@@ -362,8 +362,8 @@ int main(){
 		}
 		float batch_total_loss = batch_total_loss_v + batch_total_loss_p;
 		std::cout << "epoch " << i + 1 << ":\n";
-		std::cout << "value acc: " << (float)cnt_v / (batch_size*num_of_training_data/10) << "  ";
-		std::cout << "policy acc: " << (float)cnt_p / (batch_size*num_of_training_data/10) << std::endl;
+		std::cout << "value acc: " << (float)cnt_v / (num_of_training_data*50) << "  ";
+		std::cout << "policy acc: " << (float)cnt_p / (num_of_training_data*50) << std::endl;
 		std::cout << "value loss: " << batch_total_loss_v << "  ";
 		std::cout << "policy loss: " << batch_total_loss_p << "  ";
 		std::cout << "total loss: " << batch_total_loss << std::endl;
@@ -377,7 +377,7 @@ int main(){
 			int cnt_v = 0, cnt_p = 0;
 			float batch_total_loss_v = 0.0;
 			float batch_total_loss_p = 0.0;
-			for (int k = 0; k < num_of_testing_data/10; ++k) {
+			for (int k = 0; k < num_of_testing_data*50/batch_size; ++k) {
 				std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> tp_eval = Sample_Batch_Eval(batch_size);
 				
 				auto data_eval = std::get<0>(tp_eval).to(device);
@@ -415,8 +415,8 @@ int main(){
 				}
 			}
 			
-			std::cout << "value acc: " << (float)cnt_v / (batch_size*num_of_testing_data/10) << "  ";
-			std::cout << "policy acc: " << (float)cnt_p / (batch_size*num_of_testing_data/10) << std::endl;
+			std::cout << "value acc: " << (float)cnt_v / (num_of_testing_data*50) << "  ";
+			std::cout << "policy acc: " << (float)cnt_p / (num_of_testing_data*50) << std::endl;
 			std::cout << "value loss: " << batch_total_loss_v << "  ";
 			std::cout << "policy loss: " << batch_total_loss_p << "  ";
 			std::cout << "total loss: " << batch_total_loss_v + batch_total_loss_p << std::endl << std::endl;
