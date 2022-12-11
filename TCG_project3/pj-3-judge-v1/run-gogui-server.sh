@@ -1,7 +1,8 @@
 #!/bin/bash
 echo "GoGui-Server Launcher V20211112"
 # command to launch
-player='./nogo --shell --name="Hollow" --black="mcts T=1000" --white="mcts T=1000"'
+#player='./nogo --shell --name="Hollow" --black="mcts T=1000" --white="mcts T=1000"'
+player='/home/yucheng/桌面/TCG/TCG_project3/pj-3-code-v1/nogo --shell --name="1" --black="mcts N=12000 c=0.5" --white="mcts N=12000 c=0.5"'
 # port for binding
 port=${1:-auto}
 # display mode: states or commands
