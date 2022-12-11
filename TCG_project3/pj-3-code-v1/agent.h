@@ -21,8 +21,8 @@
 #include <bits/stdc++.h>
 #include <omp.h>
 
-//#define ParallelAverageSelection
-#define ParallelMajorityVote
+#define ParallelAverageSelection
+//#define ParallelMajorityVote
 //#define Normal
 
 class agent {
