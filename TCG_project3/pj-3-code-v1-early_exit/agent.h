@@ -225,6 +225,26 @@ public:
 			//std::fstream debug("record.txt", std::ios::app);
 			
 			for(int i = 0; i < N; ++i){
+				// early exit
+				
+				if ((i + 1) % 1000 == 0) {
+					int max1 = -std::numeric_limits<int>::max();
+					int max2 = -std::numeric_limits<int>::max();
+					for (auto &m_child : child) {
+						int tmp = m_child.second->total_cnt;
+						if (tmp > max1) {
+							max2 = max1;
+							max1 = tmp;
+						} else if (tmp > max2) {
+							max2 = tmp;
+						}
+					}
+
+					if (max2 + (N - i) < max1) {
+						break;
+					}
+				}
+				
 				// select
 				//debug << "select" << std::endl;
 				std::vector<node*> path = select_root_to_leaf(info().who_take_turns, ucb_c);

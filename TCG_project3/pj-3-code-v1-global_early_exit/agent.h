@@ -96,22 +96,71 @@ public:
 	virtual action take_action(const board& state) {
 		int N = meta["N"];
 		float c = meta["c"];
-		if(N){
+		if (N) {
 			#ifdef ParallelAverageSelection
 			int thread_num = omp_get_num_procs();
 			omp_set_num_threads(thread_num);
 
 			std::vector<std::vector<int>> average_selection(thread_num, std::vector<int>(81, 0));
+			std::vector<node*> root_vec;
+
+			for (int i = 0; i < thread_num; ++i) {
+				node* root = new node(state);
+				root_vec.push_back(root);
+			}
+
+			int split = N / 1000;
 
 			#pragma omp parallel
 			{
 				int id = omp_get_thread_num();
-				node* root = new node(state);
-				root->MCTS(N, engine, c);
-
-				for (auto &all_child : root->child) {
+				root_vec[id]->MCTS(N / 2, engine, c);
+				/*
+				for (auto &all_child : root_vec[id]->child) {
 					average_selection[id][all_child.first] = (all_child.second)->total_cnt;
 				}
+				*/
+			}
+			
+			for (int i = split / 2 + 1; i <= split; ++i) {
+
+				#pragma omp parallel
+				{
+					int id = omp_get_thread_num();
+					root_vec[id]->MCTS(N / split, engine, c);
+
+					for (auto &all_child : root_vec[id]->child) {
+						average_selection[id][all_child.first] = (all_child.second)->total_cnt;
+					}
+					
+				}
+
+				// early exit
+				std::vector<int> result(81, 0);
+				for (int j = 0; j < 81; ++j) {
+					for (int i = 0; i < thread_num; ++i) {
+						result[j] += average_selection[i][j];
+					}
+				}
+
+				int max1 = -std::numeric_limits<int>::max();
+				int max2 = -std::numeric_limits<int>::max();
+				for (auto &r : result) {
+					int tmp = r;
+					if (tmp > max1) {
+						max2 = max1;
+						max1 = tmp;
+					} else if (tmp > max2) {
+						max2 = tmp;
+					}
+				}
+
+				if (max2 + (N * thread_num - ((i * N / split) * thread_num)) < max1) {
+					break;
+				}
+			}
+
+			for (auto &root : root_vec) {
 				delete_tree(root);
 			}
 
@@ -225,6 +274,26 @@ public:
 			//std::fstream debug("record.txt", std::ios::app);
 			
 			for(int i = 0; i < N; ++i){
+				// early exit
+				/*
+				if ((i + 1) % 1000 == 0) {
+					int max1 = -std::numeric_limits<int>::max();
+					int max2 = -std::numeric_limits<int>::max();
+					for (auto &m_child : child) {
+						int tmp = m_child.second->total_cnt;
+						if (tmp > max1) {
+							max2 = max1;
+							max1 = tmp;
+						} else if (tmp > max2) {
+							max2 = tmp;
+						}
+					}
+
+					if (max2 + (N - i) < max1) {
+						break;
+					}
+				}
+				*/
 				// select
 				//debug << "select" << std::endl;
 				std::vector<node*> path = select_root_to_leaf(info().who_take_turns, ucb_c);
